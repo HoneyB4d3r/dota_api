@@ -1,23 +1,35 @@
 import argparse
 import json
-import requests
 import pandas as pd
+import requests
+import streamlit as st
 
 
 def main():
     args = arg_handler()
     if player_id := args.load:
-        df = pd.read_csv(f"{player_id}.csv")
-        df.set_index("match_id", inplace=True)
-        print(df)
+        df = load_data(player_id)
+        build_dashboard(df)
     elif player_id := args.request:
         response = api_request("players", player_id, "matches")
         print(response.status_code)
-
         player_data = response.json()
-        df = pd.DataFrame(player_data)
-        df.set_index("match_id", inplace=True)
-        df.to_csv(f"{player_id}.csv")
+        save_data(player_data, player_id)
+
+
+def build_dashboard(data):
+    pass
+
+
+def load_data(file_name: str):
+    df = pd.read_csv(f"{file_name}.csv")
+    df.set_index("match_id", inplace=True)
+
+
+def save_data(data, file_name: str):
+    df = pd.DataFrame(data)
+    df.set_index("match_id", inplace=True)
+    df.to_csv(f"{file_name}.csv")
 
 
 def arg_handler():
@@ -33,6 +45,7 @@ def arg_handler():
     return parser.parse_args()
 
 
+@st.cache_data(ttl=3600, show_spinner="Fetching data from API...")
 def api_request(request: str, player_id: int, *paths: str):
     url = f"https://api.opendota.com/api/{request}/{player_id}"
     for path in paths:
