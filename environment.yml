@@ -2,3 +2,4 @@ name: dota_api
 dependencies:
   - pandas
   - numpy
+  - requests
