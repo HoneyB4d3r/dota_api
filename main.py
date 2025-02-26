@@ -7,6 +7,7 @@ import streamlit as st
 
 def main():
     args = arg_handler()
+    print(args)
     if player_id := args.load:
         df = load_data(player_id)
         build_dashboard(df)
@@ -24,6 +25,7 @@ def build_dashboard(data):
 def load_data(file_name: str):
     df = pd.read_csv(f"{file_name}.csv")
     df.set_index("match_id", inplace=True)
+    return df
 
 
 def save_data(data, file_name: str):
