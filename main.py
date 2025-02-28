@@ -21,8 +21,20 @@ def main():
 
 
 def build_dashboard(data):
+    build_kda(data)
+
+
+@st.cache_data(ttl=3600)
+def build_kda(data):
     st.title("DotA 2 Player Statistics")
     st.dataframe(data)
+    st.line_chart(
+        data[["start_time", "kills", "assists", "deaths"]].head(50),
+        x="start_time",
+        y=["kills", "assists", "deaths"],
+        x_label="Time",
+        color=["#ffcc00", "#ff0000", "#3333ff"],
+    )
 
 
 @st.cache_data(ttl=3600)
