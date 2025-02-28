@@ -4,12 +4,14 @@ import pandas as pd
 import requests
 import streamlit as st
 
+from datetime import datetime, timezone
+
 
 def main():
     args = arg_handler()
     print(args)
     if player_id := args.load:
-        df = load_data(player_id)
+        df = convert_unix_time(load_data(player_id))
         build_dashboard(df)
     elif player_id := args.request:
         response = api_request("players", player_id, "matches")
@@ -19,9 +21,21 @@ def main():
 
 
 def build_dashboard(data):
-    pass
+    st.title("DotA 2 Player Statistics")
+    st.dataframe(data)
 
 
+@st.cache_data(ttl=3600)
+def convert_unix_time(data):
+    for index, row in data.iterrows():
+        utc_time = datetime.fromtimestamp(
+            row["start_time"], tz=timezone.utc
+        ).strftime(r"%Y-%m-%d %H:%M:%S")
+        data.at[index, "start_time"] = utc_time
+    return data
+
+
+@st.cache_data(ttl=3600, show_spinner="Loading data...")
 def load_data(file_name: str):
     df = pd.read_csv(f"{file_name}.csv")
     df.set_index("match_id", inplace=True)
