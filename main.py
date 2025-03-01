@@ -1,5 +1,5 @@
 import argparse
-import json
+import matplotlib.pyplot as plt
 import pandas as pd
 import requests
 import streamlit as st
@@ -22,6 +22,24 @@ def main():
 
 def build_dashboard(data):
     build_kda(data)
+    st.write("Win Distribution")
+    build_pychart(data["radiant_win"])
+
+
+@st.cache_data(ttl=3600)
+def build_pychart(data):
+    radiant_win = data.describe()["freq"]
+    dire_win = data.describe()["count"] - radiant_win
+    fig, ax = plt.subplots(figsize=(5, 5))
+    fig.set_facecolor("#00000000")
+    ax.pie(
+        [radiant_win, dire_win],
+        labels=["Radiant", "Dire"],
+        autopct="%1.1f%%",
+        colors=["#3333ff", "#ff0000"],
+        textprops={"color": "#ffffff"},
+    )
+    st.pyplot(fig)
 
 
 @st.cache_data(ttl=3600)
