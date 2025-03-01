@@ -4,3 +4,4 @@ dependencies:
   - numpy
   - requests
   - streamlit
+  - matplotlib
