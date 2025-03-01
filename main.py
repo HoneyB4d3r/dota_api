@@ -10,6 +10,9 @@ from datetime import datetime, timezone
 def main():
     args = arg_handler()
     print(args)
+    player_id = 64797907
+    response = api_request("players", player_id, "pros")
+    st.dataframe(pd.DataFrame(response.json()))
     if player_id := args.load:
         df = convert_unix_time(load_data(player_id))
         build_dashboard(df)
