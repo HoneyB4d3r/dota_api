@@ -9,10 +9,6 @@ from datetime import datetime, timezone
 
 def main():
     args = arg_handler()
-    print(args)
-    # player_id = 64797907
-    # response = api_request("players", player_id, "pros")
-    # st.dataframe(pd.DataFrame(response.json()))
     if player_id := args.load:
         df = convert_unix_time(load_data(player_id))
         build_dashboard(df)
@@ -108,11 +104,3 @@ def load_json():
 
 if __name__ == "__main__":
     main()
-
-    # match_id = 8189523293
-    #
-    # response = api_request("matches", match_id)
-    # print(response.status_code)
-    #
-    # match_data = response.json()
-    # print(match_data["players"])
