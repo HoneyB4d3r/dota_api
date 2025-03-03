@@ -8,45 +8,79 @@ from datetime import datetime, timezone
 
 
 def main():
-    args = arg_handler()
-
-    response = api_request("players", args.ID, "matches")
-    print(response.status_code)
-    df = pd.DataFrame(response.json())
-    df = convert_unix_time(df)
-    df.set_index("match_id", inplace=True)
-    build_dashboard(df)
-
-    response = api_request("players", args.ID, "pros")
-    st.dataframe(pd.DataFrame(response.json()))
-
-
-def build_dashboard(data):
     st.set_page_config(
         page_title="DotA 2 Player Stats",
-        page_icon="video_game",
+        page_icon=":video_game:",
     )
-    st.title("DotA 2 Player Stats")
-    st.dataframe(data)
-    build_kda(data)
-    build_pychart(data["radiant_win"])
+    args = arg_handler()
+
+    response_matches = api_request("players", args.ID, "matches")
+    df_matches = pd.DataFrame(response_matches.json())
+    df_matches = convert_unix_time(df_matches, "start_time")
+    df_matches.set_index("match_id", inplace=True)
+
+    response_pros = api_request("players", args.ID, "pros")
+    df_pros = pd.DataFrame(response_pros.json())
+    df_pros = convert_unix_time(df_pros, "last_played")
+
+    build_dashboard(
+        df_matches,
+        df_pros[
+            [
+                "name",
+                "team_name",
+                "last_played",
+                "win",
+                "games",
+                "with_win",
+                "with_games",
+                "against_win",
+                "against_games",
+            ]
+        ],
+    )
+    print(response_matches.status_code)
+    print(response_pros.status_code)
+
+
+def build_dashboard(df_matches, df_pros):
+    st.title("Player Stats")
+    st.dataframe(df_matches)
+    build_kda(df_matches)
+    build_pychart(df_matches["radiant_win"])
+    st.title("Player's matches with pros")
+    st.dataframe(df_pros)
+    get_last_pro_matches(df_matches, df_pros)
+
+
+@st.cache_data(ttl=3600)
+def get_last_pro_matches(df_matches, df_pros):
+    for _, row in df_pros.iterrows():
+        pro_match = df_matches.loc[
+            df_matches["start_time"] == row["last_played"]
+        ]
+        st.write(row["name"], row["win"], row["with_win"], pro_match)
 
 
 @st.cache_data(ttl=3600)
 def build_pychart(data):
     radiant_win = data.describe()["freq"]
     dire_win = data.describe()["count"] - radiant_win
-    fig, ax = plt.subplots(figsize=(5, 5))
+    fig, ax = plt.subplots(figsize=(2, 2))
     fig.set_facecolor("#00000000")
     ax.pie(
         [radiant_win, dire_win],
         labels=["Radiant", "Dire"],
         autopct="%1.1f%%",
         colors=["#3333ff", "#ff0000"],
-        textprops={"color": "#ffffff"},
+        textprops={
+            "color": "#ffffff",
+            "fontsize": 6,
+        },
+        shadow=True,
     )
     st.write("Win Distribution")
-    st.pyplot(fig)
+    st.pyplot(fig, use_container_width=False)
 
 
 @st.cache_data(ttl=3600)
@@ -62,12 +96,13 @@ def build_kda(data):
 
 
 @st.cache_data(ttl=3600)
-def convert_unix_time(data):
+def convert_unix_time(data, *columns: str):
     for index, row in data.iterrows():
-        utc_time = datetime.fromtimestamp(
-            row["start_time"], tz=timezone.utc
-        ).strftime(r"%Y-%m-%d %H:%M:%S")
-        data.at[index, "start_time"] = utc_time
+        for column in columns:
+            utc_time = datetime.fromtimestamp(
+                row[column], tz=timezone.utc
+            ).strftime(r"%Y-%m-%d %H:%M:%S")
+            data.at[index, column] = utc_time
     return data
 
 
