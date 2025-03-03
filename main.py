@@ -23,8 +23,8 @@ def main():
 
 def build_dashboard(data):
     st.title("DotA 2 Player Stats")
+    st.dataframe(data)
     build_kda(data)
-    st.write("Win Distribution")
     build_pychart(data["radiant_win"])
 
 
@@ -41,13 +41,13 @@ def build_pychart(data):
         colors=["#3333ff", "#ff0000"],
         textprops={"color": "#ffffff"},
     )
+    st.write("Win Distribution")
     st.pyplot(fig)
 
 
 @st.cache_data(ttl=3600)
 def build_kda(data):
-    st.title("DotA 2 Player Statistics")
-    st.dataframe(data)
+    st.write("KDA-chart")
     st.line_chart(
         data[["start_time", "kills", "assists", "deaths"]].head(50),
         x="start_time",
