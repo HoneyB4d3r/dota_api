@@ -3,24 +3,23 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import requests
 import streamlit as st
+import sys
 
 from datetime import datetime, timezone
 
 
 def main():
     args = arg_handler()
-    print(args)
-    # player_id = 64797907
-    # response = api_request("players", player_id, "pros")
-    # st.dataframe(pd.DataFrame(response.json()))
-    if player_id := args.load:
-        df = convert_unix_time(load_data(player_id))
-        build_dashboard(df)
-    elif player_id := args.request:
-        response = api_request("players", player_id, "matches")
-        print(response.status_code)
-        player_data = response.json()
-        save_data(player_data, player_id)
+
+    response = api_request("players", args.ID, "matches")
+    print(response.status_code)
+    df = pd.DataFrame(response.json())
+    df = convert_unix_time(df)
+    df.set_index("match_id", inplace=True)
+    build_dashboard(df)
+
+    response = api_request("players", args.ID, "pros")
+    st.dataframe(pd.DataFrame(response.json()))
 
 
 def build_dashboard(data):
@@ -68,29 +67,11 @@ def convert_unix_time(data):
     return data
 
 
-@st.cache_data(ttl=3600, show_spinner="Loading data...")
-def load_data(file_name: str):
-    df = pd.read_csv(f"{file_name}.csv")
-    df.set_index("match_id", inplace=True)
-    return df
-
-
-def save_data(data, file_name: str):
-    df = pd.DataFrame(data)
-    df.set_index("match_id", inplace=True)
-    df.to_csv(f"{file_name}.csv")
-
-
 def arg_handler():
     parser = argparse.ArgumentParser(
-        prog="DotA data analysis", description="Analydsis of DotA-player data"
+        prog="DotA data analysis", description="Analysis of DotA-player data"
     )
-    parser.add_argument(
-        "--load", default=None, help="User ID to load .csv-file", type=int
-    )
-    parser.add_argument(
-        "--request", default=None, help="User ID to send request", type=int
-    )
+    parser.add_argument("--ID", default=None, help="Player ID", type=int)
     return parser.parse_args()
 
 
@@ -108,11 +89,3 @@ def load_json():
 
 if __name__ == "__main__":
     main()
-
-    # match_id = 8189523293
-    #
-    # response = api_request("matches", match_id)
-    # print(response.status_code)
-    #
-    # match_data = response.json()
-    # print(match_data["players"])
