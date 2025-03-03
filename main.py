@@ -22,6 +22,7 @@ def main():
 
 
 def build_dashboard(data):
+    st.title("DotA 2 Player Stats")
     build_kda(data)
     st.write("Win Distribution")
     build_pychart(data["radiant_win"])
