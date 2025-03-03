@@ -22,6 +22,10 @@ def main():
 
 
 def build_dashboard(data):
+    st.set_page_config(
+        page_title="DotA 2 Player Stats",
+        page_icon="video_game",
+    )
     st.title("DotA 2 Player Stats")
     st.dataframe(data)
     build_kda(data)
