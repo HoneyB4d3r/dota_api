@@ -61,8 +61,23 @@ def build_dashboard(df_matches, df_pros):
 @st.cache_data(ttl=3600)
 def get_last_pro_matches(df_matches, df_pros):
     for row in df_pros.itertuples():
-        pro_match = df_matches.loc[df_matches.start_time == row.last_played]
-        st.write(row.name, row.win, row.with_win, pro_match)
+        if row.win:
+            result = "win"
+        else:
+            result = "loss"
+
+        if row.win and not row.with_win:
+            team = "enemies"
+        elif row.win and row.with_win:
+            team = "mates"
+        else:
+            team = "mates"
+
+        st.write(row.name, "--", team, "--", result)
+        df_recent_match = df_matches.loc[
+            df_matches.start_time == row.last_played
+        ]
+        st.dataframe(df_recent_match)
 
 
 @st.cache_data(ttl=3600)
