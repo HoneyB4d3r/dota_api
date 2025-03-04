@@ -25,19 +25,7 @@ def main():
 
     build_dashboard(
         df_matches,
-        df_pros[
-            [
-                "name",
-                "team_name",
-                "last_played",
-                "win",
-                "games",
-                "with_win",
-                "with_games",
-                "against_win",
-                "against_games",
-            ]
-        ],
+        df_pros,
     )
     print(response_matches.status_code)
     print(response_pros.status_code)
@@ -49,17 +37,32 @@ def build_dashboard(df_matches, df_pros):
     build_kda(df_matches)
     build_pychart(df_matches["radiant_win"])
     st.title("Player's matches with pros")
-    st.dataframe(df_pros)
-    get_last_pro_matches(df_matches, df_pros)
+    try:
+        df_pros = df_pros[
+            [
+                "name",
+                "team_name",
+                "last_played",
+                "win",
+                "games",
+                "with_win",
+                "with_games",
+                "against_win",
+                "against_games",
+            ]
+        ]
+    except KeyError:
+        st.write("No recorded games with pro players.")
+    else:
+        st.dataframe(df_pros)
+        get_last_pro_matches(df_matches, df_pros)
 
 
 @st.cache_data(ttl=3600)
 def get_last_pro_matches(df_matches, df_pros):
-    for _, row in df_pros.iterrows():
-        pro_match = df_matches.loc[
-            df_matches["start_time"] == row["last_played"]
-        ]
-        st.write(row["name"], row["win"], row["with_win"], pro_match)
+    for row in df_pros.itertuples():
+        pro_match = df_matches.loc[df_matches.start_time == row.last_played]
+        st.write(row.name, row.win, row.with_win, pro_match)
 
 
 @st.cache_data(ttl=3600)
