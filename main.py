@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import requests
 import streamlit as st
+import sys
 
 from datetime import datetime, timezone
 
@@ -15,13 +16,32 @@ def main():
     args = arg_handler()
 
     response_matches = api_request("players", args.ID, "matches")
-    df_matches = pd.DataFrame(response_matches.json())
+    try:
+        df_matches = pd.DataFrame(response_matches.json())
+    except ValueError:
+        st.write(f"Bad API request {response_matches}")
+
     df_matches = convert_unix_time(df_matches, "start_time")
     df_matches.set_index("match_id", inplace=True)
 
     response_pros = api_request("players", args.ID, "pros")
-    df_pros = pd.DataFrame(response_pros.json())
+    try:
+        df_pros = pd.DataFrame(response_pros.json())
+    except ValueError:
+        st.write(f"Bad API request {response_pros}")
+
     df_pros = convert_unix_time(df_pros, "last_played")
+
+    response_heroes = api_request("heroes")
+    try:
+        df_heros = pd.DataFrame(response_heroes.json()).set_index("id")
+    except ValueError:
+        st.write(f"Bad API request {response_heroes}")
+
+    df_matches["hero_id"] = df_matches["hero_id"].map(
+        df_heros["localized_name"]
+    )
+    df_matches.rename(columns={"hero_id": "Hero"}, inplace=True)
 
     build_dashboard(
         df_matches,
@@ -128,20 +148,16 @@ def arg_handler():
     parser = argparse.ArgumentParser(
         prog="DotA data analysis", description="Analysis of DotA-player data"
     )
-    parser.add_argument("--ID", default=None, help="Player ID", type=int)
+    parser.add_argument("--ID", default=None, help="Player ID", type=str)
     return parser.parse_args()
 
 
 @st.cache_data(ttl=3600, show_spinner="Fetching data from API...")
-def api_request(request: str, player_id: int, *paths: str):
-    url = f"https://api.opendota.com/api/{request}/{player_id}"
+def api_request(request: str, *paths: str):
+    url = f"https://api.opendota.com/api/{request}"
     for path in paths:
         url += f"/{path}"
     return requests.get(url)
-
-
-def load_json():
-    pass
 
 
 if __name__ == "__main__":
